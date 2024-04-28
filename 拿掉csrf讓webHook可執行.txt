@@ -1,0 +1,2 @@
+在 設定 -> 執行shell腳本內 貼上
+hudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION = true
