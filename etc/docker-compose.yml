@@ -1,0 +1,51 @@
+version: "3.3"
+services:
+  serveo:
+    image: taichunmin/serveo:latest
+    tty: true
+    container_name: serveo
+    stdin_open: true
+    # see https://serveo.net/ for more options
+    # 請填寫想公開的服務名稱
+    command: >
+      autossh -M 0
+      -o ServerAliveInterval=60
+      -o ServerAliveCountMax=3
+      -o ExitOnForwardFailure=yes
+      -o StrictHostKeyChecking=no
+      -R ggoch:80:jenkins:8080
+      serveo.net
+    networks:
+      - ggoch-network
+  jenkins:
+    image: jenkins/jenkins:lts
+    restart: unless-stopped
+    privileged: true
+    user: root
+    ports:
+      - 8080:8080
+    container_name: jenkins
+    volumes:
+      - ~/jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+    depends_on:
+      - serveo
+    networks:
+      - ggoch-network
+  agent:
+    image: jenkins/ssh-agent:jdk11
+    privileged: true
+    user: root
+    container_name: agent
+    expose:
+      - 22
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIyhqujOMfGpuscgRn9hKqBA/DLV5KBylVTfW7BGs9LS jenkins
+    networks:
+      - ggoch-network
+
+networks:
+  ggoch-network:
+    name: scale-network
+    driver: bridge
